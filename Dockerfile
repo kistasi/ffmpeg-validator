@@ -1,13 +1,13 @@
 # Pinned to an exact version, like the rest of the malna stack: a floating tag
 # can move between builds and invalidate the cached `npm ci` layer.
 # --- Dependencies -----------------------------------------------------------
-FROM node:24.22.0-alpine3.24 AS deps
+FROM node:26.13.0-alpine3.24 AS deps
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
 # --- Build ------------------------------------------------------------------
-FROM node:24.22.0-alpine3.24 AS builder
+FROM node:26.13.0-alpine3.24 AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -15,7 +15,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # --- Runtime ----------------------------------------------------------------
-FROM node:24.22.0-alpine3.24 AS runner
+FROM node:26.13.0-alpine3.24 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
