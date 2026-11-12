@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # The default of 5 is easily filled by one release wave of majors.
+    open-pull-requests-limit: 10
     groups:
       # One PR for the routine bumps; majors still come one at a time.
       minor-and-patch:
