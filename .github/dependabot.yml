@@ -8,6 +8,14 @@ updates:
       # One PR for the routine bumps; majors still come one at a time.
       minor-and-patch:
         update-types: [minor, patch]
+    ignore:
+      # Majors the Next.js lint toolchain can't take yet: eslint-config-next's
+      # bundled eslint-plugin-react crashes on ESLint 10, and typescript-eslint
+      # rejects TypeScript 7. Drop these once those catch up.
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: github-actions
     directory: /
