@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import FfmpegValidator from './ffmpeg-validator'
 import type { LibraryMovie, Run, RunsResponse } from '@/lib/types'
@@ -96,7 +96,9 @@ describe('FfmpegValidator', () => {
     expect(await screen.findByText('Still Alice')).toBeInTheDocument()
     expect(screen.getByText('bad nal')).toBeInTheDocument()
     expect(screen.getByText('…and 38 more line(s)')).toBeInTheDocument()
-    expect(screen.getByText('Not scanned')).toBeInTheDocument()
+    // Once in the status column and once in the line under the title that
+    // replaces it on phones; CSS shows one or the other.
+    expect(within(screen.getByRole('row', { name: /Onibaba/ })).getAllByText('Not scanned')).toHaveLength(2)
     expect(screen.queryByText('Interstellar')).not.toBeInTheDocument()
     expect(screen.getByText(/3 files · 1 clean ·/)).toBeInTheDocument()
   })
