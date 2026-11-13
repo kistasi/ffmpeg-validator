@@ -43,7 +43,9 @@ import StopIcon from '@mui/icons-material/Stop'
 
 // Collapse a column to its content, for the narrow status/number columns.
 const narrow = { width: '1px', whiteSpace: 'nowrap' } as const
-const mono = { fontFamily: 'var(--font-geist-mono), monospace', fontSize: '0.8rem' } as const
+const mono = { fontFamily: 'var(--font-geist-mono), monospace', fontSize: { xs: '0.72rem', sm: '0.8rem' } } as const
+// On a phone the table keeps only movie + rescan; the rest moves under the title.
+const wideOnly = { display: { xs: 'none', sm: 'table-cell' } } as const
 
 // Fast while a scan is going so progress stays live; slow otherwise, only to
 // notice the run cron starts at 07:00.
@@ -69,7 +71,15 @@ function RunLog({ run }: { run: Run }) {
   return (
     <Box
       component="pre"
-      sx={{ ...mono, m: 0, p: 1.5, bgcolor: 'background.default', borderRadius: 1, overflowX: 'auto', maxHeight: 400 }}
+      sx={{
+        ...mono,
+        m: 0,
+        p: { xs: 1, sm: 1.5 },
+        bgcolor: 'background.default',
+        borderRadius: 1,
+        overflow: 'auto',
+        maxHeight: { xs: '50vh', sm: 400 },
+      }}
     >
       {run.log.map((line) => `${formatTime(line.at)}  ${line.message}`).join('\n') || 'No output yet.'}
     </Box>
@@ -177,12 +187,17 @@ export default function FfmpegValidator() {
   const lastRun = runs.find((r) => r.status !== 'running')
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 4 } }}>
-      <Typography variant="h5" component="h1" color="primary" sx={{ mb: 3, fontWeight: 'bold' }}>
+    <Container maxWidth="lg" sx={{ py: { xs: 2, sm: 4 } }}>
+      <Typography variant="h5" component="h1" color="primary" sx={{ mb: { xs: 2, sm: 3 }, fontWeight: 'bold' }}>
         FFmpeg Validator
       </Typography>
 
-      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', mb: 3 }}>
+      <Stack
+        direction="row"
+        spacing={1}
+        useFlexGap
+        sx={{ flexWrap: 'wrap', mb: 3, '& > .MuiButton-root': { flex: { xs: '1 1 auto', sm: '0 0 auto' } } }}
+      >
         <Button
           variant="contained"
           startIcon={<PlayArrowIcon />}
@@ -206,13 +221,17 @@ export default function FfmpegValidator() {
       )}
 
       {active ? (
-        <Paper variant="outlined" sx={{ p: 2, mb: 4, borderColor: 'info.main' }}>
-          <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 1.5 }}>
+        <Paper variant="outlined" sx={{ p: { xs: 1.5, sm: 2 }, mb: 4, borderColor: 'info.main' }}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={{ xs: 1, sm: 2 }}
+            sx={{ alignItems: { xs: 'stretch', sm: 'center' }, mb: 1.5 }}
+          >
             <Box sx={{ flex: 1, minWidth: 0 }}>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 Run #{active.id}: {runLabel(active, movies)}
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant="body2" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
                 {active.progress
                   ? `Scanning ${active.progress.index} of ${active.progress.total}: ${active.progress.title}`
                   : 'Preparing…'}
@@ -242,11 +261,15 @@ export default function FfmpegValidator() {
       )}
 
       <Stack direction="row" spacing={2} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', mb: 1.5 }}>
-        <Typography variant="h6" component="h2" color="primary">
+        <Typography variant="h6" component="h2" color="primary" sx={{ flex: { xs: 1, sm: 'none' } }}>
           Library
         </Typography>
         {!libraryLoading && !libraryError && (
-          <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ flex: { xs: '1 0 100%', sm: 1 }, order: { xs: 1, sm: 0 } }}
+          >
             {movies.length} files · {counts.clean} clean ·{' '}
             <Box component="span" sx={{ color: counts.corrupt ? 'error.main' : undefined }}>
               {counts.corrupt} corrupt
@@ -281,11 +304,11 @@ export default function FfmpegValidator() {
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={narrow}>Status</TableCell>
+                <TableCell sx={{ ...narrow, ...wideOnly }}>Status</TableCell>
                 <TableCell>Movie</TableCell>
-                <TableCell sx={narrow}>Size</TableCell>
-                <TableCell sx={narrow}>Scanned</TableCell>
-                <TableCell sx={narrow}>Took</TableCell>
+                <TableCell sx={{ ...narrow, ...wideOnly }}>Size</TableCell>
+                <TableCell sx={{ ...narrow, ...wideOnly }}>Scanned</TableCell>
+                <TableCell sx={{ ...narrow, ...wideOnly }}>Took</TableCell>
                 <TableCell sx={narrow} />
               </TableRow>
             </TableHead>
@@ -295,10 +318,10 @@ export default function FfmpegValidator() {
                 const scanning = active?.progress?.title === m.title
                 return (
                   <TableRow key={m.key} hover>
-                    <TableCell sx={{ ...narrow, color: status.tone, fontWeight: 500 }}>
+                    <TableCell sx={{ ...narrow, ...wideOnly, color: status.tone, fontWeight: 500 }}>
                       {scanning ? 'Scanning…' : status.label}
                     </TableCell>
-                    <TableCell sx={{ wordBreak: 'break-word' }}>
+                    <TableCell sx={{ wordBreak: 'break-word', pr: { xs: 0, sm: 2 } }}>
                       {m.radarrUrl ? (
                         <Link href={m.radarrUrl} target="_blank" rel="noopener">
                           {m.title}
@@ -312,8 +335,21 @@ export default function FfmpegValidator() {
                           ({m.year})
                         </Typography>
                       )}
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ display: { xs: 'block', sm: 'none' }, mt: 0.25 }}
+                      >
+                        <Box component="span" sx={{ color: status.tone, fontWeight: 500 }}>
+                          {scanning ? 'Scanning…' : status.label}
+                        </Box>
+                        {' · '}
+                        {formatBytes(m.size)}
+                        {m.scannedAt && ` · ${formatDateTime(m.scannedAt)}`}
+                        {m.scanSeconds !== null && ` · took ${formatDuration(m.scanSeconds)}`}
+                      </Typography>
                       {m.errors.length > 0 && (
-                        <Box sx={{ ...mono, color: 'error.light', mt: 0.5 }}>
+                        <Box sx={{ ...mono, color: 'error.light', mt: 0.5, overflowWrap: 'anywhere' }}>
                           {m.errors.map((line, i) => (
                             <div key={i}>{line}</div>
                           ))}
@@ -325,10 +361,14 @@ export default function FfmpegValidator() {
                         </Box>
                       )}
                     </TableCell>
-                    <TableCell sx={narrow}>{formatBytes(m.size)}</TableCell>
-                    <TableCell sx={narrow}>{m.scannedAt ? formatDateTime(m.scannedAt) : '—'}</TableCell>
-                    <TableCell sx={narrow}>{m.scanSeconds !== null ? formatDuration(m.scanSeconds) : '—'}</TableCell>
-                    <TableCell sx={narrow}>
+                    <TableCell sx={{ ...narrow, ...wideOnly }}>{formatBytes(m.size)}</TableCell>
+                    <TableCell sx={{ ...narrow, ...wideOnly }}>
+                      {m.scannedAt ? formatDateTime(m.scannedAt) : '—'}
+                    </TableCell>
+                    <TableCell sx={{ ...narrow, ...wideOnly }}>
+                      {m.scanSeconds !== null ? formatDuration(m.scanSeconds) : '—'}
+                    </TableCell>
+                    <TableCell sx={{ ...narrow, px: { xs: 0.5, sm: 2 } }}>
                       <Tooltip title="Rescan this file">
                         <span>
                           <IconButton
@@ -360,15 +400,32 @@ export default function FfmpegValidator() {
           const status = RUN_STATUS[run.status]
           return (
             <Accordion key={run.id} disableGutters variant="outlined" slotProps={{ transition: { unmountOnExit: true } }}>
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Stack direction="row" spacing={1.5} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
-                  <Typography sx={{ color: 'text.disabled', minWidth: 36 }}>#{run.id}</Typography>
-                  <Typography sx={{ minWidth: 150 }}>{formatDateTime(run.startedAt)}</Typography>
-                  <Chip label={run.options.trigger} size="small" variant="outlined" />
-                  <Typography variant="body2" sx={{ flex: 1 }}>
+              <AccordionSummary expandIcon={<ExpandMoreIcon />} sx={{ px: { xs: 1.5, sm: 2 } }}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    width: '100%',
+                    alignItems: 'center',
+                    columnGap: 1.5,
+                    rowGap: 0.5,
+                    gridTemplateColumns: { xs: 'auto 1fr auto', sm: '36px auto 1fr auto 90px' },
+                    gridTemplateAreas: {
+                      xs: '"id label status" ". when when" ". stats stats"',
+                      sm: '"id when label stats status"',
+                    },
+                  }}
+                >
+                  <Typography sx={{ gridArea: 'id', color: 'text.disabled' }}>#{run.id}</Typography>
+                  <Stack direction="row" spacing={1} sx={{ gridArea: 'when', alignItems: 'center' }}>
+                    <Typography variant="body2" sx={{ minWidth: { sm: 150 }, color: { xs: 'text.secondary', sm: 'text.primary' } }}>
+                      {formatDateTime(run.startedAt)}
+                    </Typography>
+                    <Chip label={run.options.trigger} size="small" variant="outlined" />
+                  </Stack>
+                  <Typography variant="body2" sx={{ gridArea: 'label', minWidth: 0, overflowWrap: 'anywhere' }}>
                     {runLabel(run, movies)}
                   </Typography>
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" color="text.secondary" sx={{ gridArea: 'stats' }}>
                     {run.scanned} scanned
                     {run.corrupt > 0 && (
                       <Box component="span" sx={{ color: 'error.main' }}>
@@ -378,12 +435,12 @@ export default function FfmpegValidator() {
                     )}
                     {run.finishedAt && ` · ${formatDuration(secondsBetween(run.startedAt, run.finishedAt))}`}
                   </Typography>
-                  <Typography variant="body2" sx={{ color: status.tone, fontWeight: 500, minWidth: 90 }}>
+                  <Typography variant="body2" sx={{ gridArea: 'status', color: status.tone, fontWeight: 500 }}>
                     {status.label}
                   </Typography>
-                </Stack>
+                </Box>
               </AccordionSummary>
-              <AccordionDetails>
+              <AccordionDetails sx={{ px: { xs: 1, sm: 2 } }}>
                 <RunLog run={run} />
               </AccordionDetails>
             </Accordion>
